@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocCanvas - PDF Editor</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Dependencies -->
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+    <!-- Fabric.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <!-- PDF-lib -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Toolbar -->
+    <header class="toolbar">
+        <div class="toolbar-section">
+            <h1 class="logo"><i class="fa-solid fa-file-pdf"></i> DocCanvas</h1>
+            <label class="btn btn-primary" for="pdf-upload">
+                <i class="fa-solid fa-upload"></i> Upload PDF
+            </label>
+            <input type="file" id="pdf-upload" accept="application/pdf" hidden>
+        </div>
+
+        <div class="toolbar-section center-tools empty" id="annotation-tools">
+            <button class="tool-btn" title="Pan / Select" data-tool="select"><i class="fa-solid fa-arrow-pointer"></i></button>
+            <button class="tool-btn" title="Pen Tool" data-tool="draw"><i class="fa-solid fa-pen"></i></button>
+            <button class="tool-btn" title="Highlighter" data-tool="highlight"><i class="fa-solid fa-highlighter"></i></button>
+            <button class="tool-btn" title="Eraser" data-tool="erase"><i class="fa-solid fa-eraser"></i></button>
+            <div class="separator"></div>
+            <button class="tool-btn" title="Text" data-tool="text"><i class="fa-solid fa-font"></i></button>
+            <button class="tool-btn" title="Rectangle" data-tool="rect"><i class="fa-regular fa-square"></i></button>
+            <button class="tool-btn" title="Circle" data-tool="circle"><i class="fa-regular fa-circle"></i></button>
+            <div class="separator"></div>
+            <button class="tool-btn" title="Undo" id="undo-btn"><i class="fa-solid fa-rotate-left"></i></button>
+            <button class="tool-btn" title="Redo" id="redo-btn"><i class="fa-solid fa-rotate-right"></i></button>
+        </div>
+
+        <div class="toolbar-section">
+            <div class="pagination-controls hidden" id="pagination-controls">
+                <button class="icon-btn" id="prev-page" title="Previous Page"><i class="fa-solid fa-chevron-left"></i></button>
+                <span id="page-num">0</span> / <span id="page-count">0</span>
+                <button class="icon-btn" id="next-page" title="Next Page"><i class="fa-solid fa-chevron-right"></i></button>
+                <div class="separator"></div>
+                <button class="icon-btn" id="zoom-out" title="Zoom Out"><i class="fa-solid fa-minus"></i></button>
+                <span id="zoom-val">100%</span>
+                <button class="icon-btn" id="zoom-in" title="Zoom In"><i class="fa-solid fa-plus"></i></button>
+                <div class="separator"></div>
+                <button class="icon-btn" id="rotate-page" title="Rotate"><i class="fa-solid fa-rotate"></i></button>
+                <button class="icon-btn" id="fullscreen-mode" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            </div>
+            <button class="btn btn-success hidden" id="export-pdf"><i class="fa-solid fa-download"></i> Export</button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="workspace">
+        <!-- Left Sidebar (Thumbnails) -->
+        <aside class="sidebar hidden" id="sidebar">
+            <div class="sidebar-header">
+                <h3>Pages</h3>
+            </div>
+            <div class="thumbnails-container" id="thumbnails">
+                <!-- Thumbnails will be generated here -->
+            </div>
+        </aside>
+
+        <!-- Center Viewer wrapper -->
+        <section class="viewer-wrapper">
+            <div id="initial-state" class="empty-state">
+                <i class="fa-solid fa-file-arrow-up empty-icon"></i>
+                <h2>Upload a PDF to get started</h2>
+                <p>Drag & drop or browse from your device</p>
+                <label class="btn btn-primary" for="pdf-upload-center">
+                    Browse Files
+                </label>
+                <input type="file" id="pdf-upload-center" accept="application/pdf" hidden>
+            </div>
+            
+            <div id="pdf-container" class="hidden">
+                <!-- Canvases will be injected here. 
+                     One PDF rendering canvas and one Fabric JS canvas overlay -->
+                     <canvas id="pdf-render"></canvas>
+                     <canvas id="annotation-layer"></canvas>
+            </div>
+        </section>
+
+        <!-- Right Properties Panel -->
+        <aside class="properties-panel hidden" id="properties-panel">
+            <div class="panel-section">
+                <h3>Style Properties</h3>
+                <label>Color</label>
+                <input type="color" id="tool-color" value="#ffffff">
+                
+                <label>Thickness: <span id="thickness-val">2px</span></label>
+                <input type="range" id="tool-thickness" min="1" max="50" value="2">
+            </div>
+        </aside>
+    </main>
+
+    <!-- Loader -->
+    <div id="loader" class="loader-overlay hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
