@@ -7,6 +7,7 @@ let pageNumPending = null;
 let scale = 1.0;
 let rotation = 0;
 let fabricCanvas = null;
+let isRestoringHistory = false;
 
 // Annotation State
 let annotations = {}; // { pageNum: { data: null, undoStack: [], redoStack: [] } }
@@ -220,9 +221,11 @@ function setupFabricCanvas(width, height) {
     // Restore state for current page
     fabricCanvas.clear();
     if (annotations[pageNum].data) {
+        isRestoringHistory = true;
         fabricCanvas.loadFromJSON(annotations[pageNum].data, () => {
             fabricCanvas.renderAll();
             applyToolBehavior(); // Re-apply current tool
+            isRestoringHistory = false;
         });
     } else {
         applyToolBehavior();
@@ -514,7 +517,7 @@ function saveCurrentPageAnnotations() {
 }
 
 function saveState() {
-    if(!fabricCanvas || !annotations[pageNum]) return;
+    if(isRestoringHistory || !fabricCanvas || !annotations[pageNum]) return;
     const json = fabricCanvas.toJSON();
     annotations[pageNum].data = json;
     annotations[pageNum].undoStack.push(json);
@@ -522,20 +525,25 @@ function saveState() {
 }
 
 function undo() {
-    if (!annotations[pageNum] || annotations[pageNum].undoStack.length <= 1) {
-        fabricCanvas.clear(); // If history is empty, canvas is blank
-        if(annotations[pageNum]) {
-            annotations[pageNum].redoStack.push(annotations[pageNum].undoStack.pop());
-        }
-        return;
-    }
+    if (!annotations[pageNum] || annotations[pageNum].undoStack.length === 0) return;
+    
     const current = annotations[pageNum].undoStack.pop();
     annotations[pageNum].redoStack.push(current);
     
+    if (annotations[pageNum].undoStack.length === 0) {
+        isRestoringHistory = true;
+        fabricCanvas.clear();
+        annotations[pageNum].data = null;
+        isRestoringHistory = false;
+        return;
+    }
+    
     const previous = annotations[pageNum].undoStack[annotations[pageNum].undoStack.length - 1];
+    isRestoringHistory = true;
     fabricCanvas.loadFromJSON(previous, () => {
         fabricCanvas.renderAll();
         annotations[pageNum].data = previous;
+        isRestoringHistory = false;
     });
 }
 
@@ -544,9 +552,11 @@ function redo() {
     const next = annotations[pageNum].redoStack.pop();
     annotations[pageNum].undoStack.push(next);
     
+    isRestoringHistory = true;
     fabricCanvas.loadFromJSON(next, () => {
         fabricCanvas.renderAll();
         annotations[pageNum].data = next;
+        isRestoringHistory = false;
     });
 }
 
@@ -554,6 +564,9 @@ function redo() {
  * Export Logic (Phase 4)
  */
 async function exportEditedPDF() {
+    const isConfirmed = confirm("Are you sure you want to export the edited PDF?");
+    if (!isConfirmed) return;
+
     const exportPdfBtn = document.getElementById('export-pdf');
     exportPdfBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Exporting...';
     exportPdfBtn.classList.add('disabled');
